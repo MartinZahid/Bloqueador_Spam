@@ -1,0 +1,18 @@
+# Números reportados como TELEMARKETING / SPAM publicitario en México.
+# Fuentes: reportes de la comunidad (NoCall, Tellows.mx, reportes públicos).
+# Formato: un número o prefijo por línea. Si termina en '*' es prefijo (máscara).
+8002262663
+5558041436
+5584939320
+5512200359
+5555367809
+5563012525
+5573467814
+5581017360
+5525728610
+5560183169
+5539212963
+8005746553
+5580500184
+5567080165
+5549102201

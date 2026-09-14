@@ -1,0 +1,17 @@
+# Números reportados como FRAUDE / EXTORSIÓN / acoso que suplanta entidades (phishing, falsas cobranzas, amenazas).
+# Fuentes: reportes de la comunidad (NumerosTelefono.com, Tellows.mx, NoCall).
+# Formato: un número o prefijo por línea. Si termina en '*' es prefijo (máscara).
+3328097700
+2213599215
+5569116820
+5570164638
+4622694168
+3318039103
+2211909701
+3515155070
+7491008237
+5520109542
+5548298103
+9876002541
+5516538216
+5542367854
