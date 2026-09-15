@@ -1,6 +1,7 @@
 package com.ladablocker.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -109,36 +110,42 @@ object Prefs {
         emptyList()
     }
 
-    suspend fun read(): PrefsSnapshot {
-        val p = ds().data.first()
-        return PrefsSnapshot(
-            activeLadas = decodeSet(p[KEY_LADAS]).toSet(),
-            exactos = decodeSet(p[KEY_EXACTOS]),
-            blanca = decodeSet(p[KEY_BLANCA]),
-            contactsBlanca = p[KEY_CONTACTS_BLANCA] ?: true,
-            unknownBlock = p[KEY_UNKNOWN_BLOCK] ?: false,
-            masterEnabled = p[KEY_MASTER] ?: true,
-            community = communityFromJson(p[KEY_COMMUNITY] ?: "[]"),
-            history = historyFromJson(p[KEY_HISTORY] ?: "[]"),
-            updateUrls = decodeSet(p[KEY_URLS]),
-            lastUpdate = p[KEY_LAST_UPDATE] ?: 0L,
-            seeded = p[KEY_SEEDED] ?: false
-        )
+    private fun snapshotFrom(p: Preferences): PrefsSnapshot = PrefsSnapshot(
+        activeLadas = decodeSet(p[KEY_LADAS]).toSet(),
+        exactos = decodeSet(p[KEY_EXACTOS]),
+        blanca = decodeSet(p[KEY_BLANCA]),
+        contactsBlanca = p[KEY_CONTACTS_BLANCA] ?: true,
+        unknownBlock = p[KEY_UNKNOWN_BLOCK] ?: false,
+        masterEnabled = p[KEY_MASTER] ?: true,
+        community = communityFromJson(p[KEY_COMMUNITY] ?: "[]"),
+        history = historyFromJson(p[KEY_HISTORY] ?: "[]"),
+        updateUrls = decodeSet(p[KEY_URLS]),
+        lastUpdate = p[KEY_LAST_UPDATE] ?: 0L,
+        seeded = p[KEY_SEEDED] ?: false
+    )
+
+    private fun MutablePreferences.writeTo(s: PrefsSnapshot) {
+        this[KEY_LADAS] = encodeSet(s.activeLadas.toList())
+        this[KEY_EXACTOS] = encodeSet(s.exactos)
+        this[KEY_BLANCA] = encodeSet(s.blanca)
+        this[KEY_CONTACTS_BLANCA] = s.contactsBlanca
+        this[KEY_UNKNOWN_BLOCK] = s.unknownBlock
+        this[KEY_MASTER] = s.masterEnabled
+        this[KEY_COMMUNITY] = communityToJson(s.community)
+        this[KEY_HISTORY] = historyToJson(s.history)
+        this[KEY_URLS] = encodeSet(s.updateUrls)
+        this[KEY_LAST_UPDATE] = s.lastUpdate
+        this[KEY_SEEDED] = s.seeded
     }
 
+    suspend fun read(): PrefsSnapshot = snapshotFrom(ds().data.first())
+
     suspend fun save(s: PrefsSnapshot) {
-        ds().edit { p ->
-            p[KEY_LADAS] = encodeSet(s.activeLadas.toList())
-            p[KEY_EXACTOS] = encodeSet(s.exactos)
-            p[KEY_BLANCA] = encodeSet(s.blanca)
-            p[KEY_CONTACTS_BLANCA] = s.contactsBlanca
-            p[KEY_UNKNOWN_BLOCK] = s.unknownBlock
-            p[KEY_MASTER] = s.masterEnabled
-            p[KEY_COMMUNITY] = communityToJson(s.community)
-            p[KEY_HISTORY] = historyToJson(s.history)
-            p[KEY_URLS] = encodeSet(s.updateUrls)
-            p[KEY_LAST_UPDATE] = s.lastUpdate
-            p[KEY_SEEDED] = s.seeded
-        }
+        ds().edit { p -> p.writeTo(s) }
+    }
+
+    /** Lectura-modificación-escritura atómica: DataStore serializa cada edit(). */
+    suspend fun update(transform: (PrefsSnapshot) -> PrefsSnapshot) {
+        ds().edit { p -> p.writeTo(transform(snapshotFrom(p))) }
     }
 }

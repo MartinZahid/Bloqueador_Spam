@@ -20,7 +20,7 @@ object AssetsLoader {
         emptyList()
     }
 
-    fun loadCategory(context: Context, category: Categoria): List<String> = try {
+    fun loadCategory(context: Context, category: Categoria): List<ValidNumber> = try {
         context.assets.open(category.assetFile).bufferedReader().useLines { lines ->
             lines.mapNotNull { line ->
                 val trimmed = line.trim()
@@ -33,19 +33,20 @@ object AssetsLoader {
     }
 
     /** Devuelve número normalizado (exacto) o prefijo (mask) ya normalizados, o null si no es válido. */
-    fun ensureValid(raw: String): String? {
+    fun ensureValid(raw: String): ValidNumber? {
         val isMask = raw.endsWith("*")
         val clean = raw.removeSuffix("*").trim()
         if (clean.isEmpty()) return null
+        val digits = clean.filter { it.isDigit() }
+        if (digits.length < 7) return null
         val national = if (isMask) {
-            val digits = clean.filter { it.isDigit() }
-            if (digits.length < 7 || digits.length > 11) return null
-            digits.take(10)
+            if (digits.length > 10) return null
+            digits
         } else {
             val n = com.ladablocker.util.Normalizer.normalizeToNational(clean)
-            if (n.length < 7 || n.length > 10) return null
+            if (n.length > 10) return null
             n
         }
-        return if (isMask) national else national
+        return ValidNumber(national, mask = isMask || national.length < 10)
     }
 }

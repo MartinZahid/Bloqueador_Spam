@@ -10,6 +10,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class CommunityUpdaterWorker(
@@ -23,7 +25,8 @@ class CommunityUpdaterWorker(
         var imported = false
         for (url in p.updateUrls) {
             runCatching {
-                val text = java.net.URL(url).readText()
+                val text = withContext(Dispatchers.IO) { fetchLimited(url, MAX_DOWNLOAD_BYTES) }
+                    ?: return@runCatching
                 val numbers = ListsImporter.parse(text)
                 if (numbers.isNotEmpty()) {
                     Repo.importNumbers(numbers, Categoria.TELEMARKETING, url, active = false)
@@ -34,7 +37,33 @@ class CommunityUpdaterWorker(
         if (imported) Repo.markLastUpdate()
         return Result.success()
     }
+
+    private fun fetchLimited(url: String, maxBytes: Int): String? {
+        val conn = java.net.URL(url).openConnection()
+        return try {
+            val ins = conn.getInputStream()
+            try {
+                val out = java.io.ByteArrayOutputStream()
+                val buf = ByteArray(8192)
+                var total = 0
+                while (true) {
+                    val r = ins.read(buf)
+                    if (r < 0) break
+                    total += r
+                    if (total > maxBytes) return null
+                    out.write(buf, 0, r)
+                }
+                out.toString(Charsets.UTF_8.name())
+            } finally {
+                ins.close()
+            }
+        } finally {
+            (conn as? java.net.HttpURLConnection)?.disconnect()
+        }
+    }
 }
+
+private const val MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024
 
 object CommunityUpdater {
 

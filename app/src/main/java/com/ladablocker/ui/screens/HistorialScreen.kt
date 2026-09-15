@@ -81,7 +81,7 @@ private fun HistRow(call: BlockedCall, state: AppState, vm: AppViewModel) {
                 overflow = TextOverflow.Ellipsis
             )
         }
-        if (national.length >= 7) {
+        if (national.length == 10) {
             if (!inExactos) {
                 IconButton(onClick = { vm.addExact(national) }) {
                     Icon(Icons.Filled.DoNotDisturb, contentDescription = "Bloquear siempre")

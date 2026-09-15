@@ -13,6 +13,12 @@ enum class Categoria(val label: String, val assetFile: String) {
 
 data class LadaInfo(val code: String, val name: String)
 
+/** Número validado en una lista: `mask = true` indica prefijo (bloqueo por coincidencia inicial). */
+data class ValidNumber(
+    val number: String,
+    val mask: Boolean
+)
+
 data class CommunityNumber(
     val number: String,
     val category: Categoria,

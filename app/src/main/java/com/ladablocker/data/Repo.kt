@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 object Repo {
 
@@ -23,7 +24,9 @@ object Repo {
         Prefs.init(context, scope)
         val ladas = AssetsLoader.loadLadas(context)
         _state.update { it.copy(ladas = ladas) }
-        scope.launch {
+        // Carga síncrona para que BlockerCache esté listo antes de la 1ª llamada
+        // (el CallScreeningService arranca después de Application.onCreate).
+        runBlocking {
             seedIfNeeded(context)
             refresh()
         }
@@ -34,8 +37,8 @@ object Repo {
         if (p.seeded) return
         val list = ArrayList<CommunityNumber>()
         Categoria.entries.forEach { cat ->
-            AssetsLoader.loadCategory(ctx, cat).forEach { n ->
-                list.add(CommunityNumber(n, cat, active = false, source = cat.assetFile, mask = n.length < 10))
+            AssetsLoader.loadCategory(ctx, cat).forEach { v ->
+                list.add(CommunityNumber(v.number, cat, active = false, source = cat.assetFile, mask = v.mask))
             }
         }
         val ladas = p.activeLadas.toMutableSet()
@@ -73,8 +76,7 @@ object Repo {
     }
 
     private suspend fun mutate(f: (PrefsSnapshot) -> PrefsSnapshot) {
-        val p = Prefs.read()
-        Prefs.save(f(p))
+        Prefs.update(f)
         refresh()
     }
 
@@ -106,7 +108,7 @@ object Repo {
 
     fun addBlanca(number: String) {
         val n = com.ladablocker.util.Normalizer.normalizeToNational(number)
-        if (n.length < 7) return
+        if (n.length != 10) return
         scope.launch {
             mutate { p ->
                 if (p.blanca.contains(n)) p else p.copy(blanca = p.blanca + n)
@@ -168,12 +170,12 @@ object Repo {
     }
 
     /** Agrega números importados/descargados como pendientes de revisión (active = false). */
-    fun importNumbers(numbers: List<String>, category: Categoria, source: String, active: Boolean) {
+    fun importNumbers(numbers: List<ValidNumber>, category: Categoria, source: String, active: Boolean) {
         if (numbers.isEmpty()) return
         scope.launch {
             mutate { p ->
                 val items = numbers.map {
-                    CommunityNumber(it, category, active = active, source = source, mask = it.length < 10)
+                    CommunityNumber(it.number, category, active = active, source = source, mask = it.mask)
                 }
                 p.copy(community = mergeCommunity(items, p.community))
             }

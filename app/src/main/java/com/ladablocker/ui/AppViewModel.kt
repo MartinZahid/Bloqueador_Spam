@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.ladablocker.data.Categoria
 import com.ladablocker.data.Repo
+import com.ladablocker.data.ValidNumber
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -34,7 +35,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun removeCommunity(number: String, category: Categoria) =
         Repo.removeCommunity(number, category)
 
-    fun importNumbers(numbers: List<String>, category: Categoria, source: String, active: Boolean) =
+    fun importNumbers(numbers: List<ValidNumber>, category: Categoria, source: String, active: Boolean) =
         Repo.importNumbers(numbers, category, source, active)
 
     fun clearHistory() = Repo.clearHistory()

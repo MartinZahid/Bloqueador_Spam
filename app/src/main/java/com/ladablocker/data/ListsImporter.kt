@@ -5,8 +5,8 @@ import com.ladablocker.util.Normalizer
 /** Parsea listas en txt/csv/vcf (un número por línea, comas, puntos y comas, o líneas TEL de vCard). */
 object ListsImporter {
 
-    fun parse(raw: String): List<String> {
-        val result = ArrayList<String>()
+    fun parse(raw: String): List<ValidNumber> {
+        val result = ArrayList<ValidNumber>()
         raw.split('\n', '\r', ',', ';').forEach { token ->
             val trimmed = token.trim()
             if (trimmed.isEmpty()) return@forEach

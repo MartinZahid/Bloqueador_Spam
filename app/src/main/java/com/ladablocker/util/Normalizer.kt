@@ -12,8 +12,6 @@ object Normalizer {
             s.length >= 13 && s.startsWith("521") -> s = s.drop(3)
             s.length == 13 && (s.startsWith("044") || s.startsWith("045")) -> s = s.drop(3)
             s.length == 12 && s.startsWith("52") -> s = s.drop(2)
-            s.length == 12 && s.startsWith("044") -> s = s.drop(3)
-            s.length == 12 && s.startsWith("045") -> s = s.drop(3)
             s.length == 12 && s.startsWith("01") -> s = s.drop(2)
             s.length == 11 && s.startsWith("1") -> s = s.drop(1)
         }
